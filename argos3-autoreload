@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# Function to print usage and exit
+print_usage() {
+    echo
+    echo This script watches every file in the directory of the given simulation
+    echo file and restarts the simulator every time it detects a change.
+    echo
+    echo "Usage: $0 <simulation_file>"
+    echo "<simulation_file>: The .argos simulation file"
+    echo
+}
+
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    print_usage
+    exit 0
+fi
+
+# Installing xdotool
+# xdotool is used to close the simulator in a way that when reopened
+# it will have the same window size and position as before being closed.
+which xdotool > /dev/null
+if [ $? -ne 0 ]; then
+    echo "Installing xdotool..."
+    echo
+    apt install -y xdotool
+fi
+
+# Directory and file to monitor
+SIMULATION_FILE="$1"
+
+# Check if file argument is provided
+if [ -z "$SIMULATION_FILE" ]; then
+    echo "Error: No simulation file provided."
+    print_usage
+    exit 1
+fi
+
+# Check if the provided file exists
+if [ ! -f "$SIMULATION_FILE" ]; then
+    echo "Error: The specified file $SIMULATION_FILE does not exist or is not a file."
+    print_usage
+    exit 1
+fi
+
+cd $(dirname "$SIMULATION_FILE")
+SIMULATION_DIR=.
+SIMULATION_FILE=$(basename "$SIMULATION_FILE")
+
+start_simulation() {
+    argos3 -c "$SIMULATION_FILE" 1>&2 &
+    echo $!
+}
+
+SIMULATION_PID=$(start_simulation)
+
+directory_snapshot() {
+    ls -lR "$SIMULATION_DIR"
+}
+
+PREVIOUS_SNAPSHOT=$(directory_snapshot)
+while true; do
+    CURRENT_SNAPSHOT=$(directory_snapshot)
+    
+    if [[ "$PREVIOUS_SNAPSHOT" != "$CURRENT_SNAPSHOT" ]]; then
+        echo "Change detected! Rerunning $SIMULATION_FILE"
+
+        # killing the process would work but the newly opened window
+        # will not have the same position and size of the closed one
+        # kill "$SIMULATION_PID"
+
+        # In order to let the window remember its size and position
+        # it's possible to simulate the Alt+F4 keyboard shortcut.
+        WINDOW_ID=$(xdotool search --pid "$SIMULATION_PID")
+        xdotool windowactivate "$WINDOW_ID"
+        xdotool key Alt+F4
+
+        SIMULATION_PID=$(start_simulation)
+        
+        PREVIOUS_SNAPSHOT="$CURRENT_SNAPSHOT"
+    fi
+    
+    sleep 1
+done
