@@ -52,7 +52,7 @@ while true; do
     CURRENT_SNAPSHOT=$(directory_snapshot)
     
     if [[ "$PREVIOUS_SNAPSHOT" != "$CURRENT_SNAPSHOT" ]]; then
-        echo "Change detected! Rerunning $SIMULATION_FILE"
+        echo "Change detected! Rerunning simulator"
 
         # killing the process would work but the newly opened window
         # will not have the same position and size of the closed one
@@ -61,8 +61,10 @@ while true; do
         # In order to let the window remember its size and position
         # it's possible to simulate the Alt+F4 keyboard shortcut.
         WINDOW_ID=$(xdotool search --pid "$SIMULATION_PID")
-        xdotool windowactivate "$WINDOW_ID"
-        xdotool key Alt+F4
+        if [ 0 -eq $? ]; then
+            xdotool windowactivate "$WINDOW_ID"
+            xdotool key Alt+F4
+        fi
 
         SIMULATION_PID=$(start_simulation "$@")
         
