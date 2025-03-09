@@ -25,4 +25,4 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: ${{ vars.DOCKERHUB_USERNAME }}/argos3-autoreload:${{ github.event.release.tag_name }}
+          tags: ${{ vars.DOCKERHUB_USERNAME }}/argos3-autoreload:${{ github.event.release.tag_name }},${{ vars.DOCKERHUB_USERNAME }}/argos3-autoreload:latest
