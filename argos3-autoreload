@@ -44,7 +44,7 @@ start_simulation() {
 SIMULATION_PID=$(start_simulation "$@")
 
 directory_snapshot() {
-    ls -lR "$SIMULATION_DIR"
+    ls -R --full-time "$SIMULATION_DIR"
 }
 
 PREVIOUS_SNAPSHOT=$(directory_snapshot)
